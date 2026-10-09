@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Let's Write! - Writing Assistant & Word Bank</title>
+  <style>
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-light: #eff6ff;
+      --border-color: #e2e8f0;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+
+    .brand span {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      background: var(--accent-light);
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 200px minmax(0, 1fr) minmax(340px, 440px);
+      grid-template-areas: "nav main banks";
+      gap: 1.5rem;
+      align-items: start;
+      align-content: start;
+      flex: 1;
+    }
+    .container > main { grid-area: main; }
+    .bank-stack { grid-area: banks; padding: 0 18px 18px 0; min-width: 0; }
+    .bank-tabs { display: flex; gap: 4px; padding-left: 10px; position: relative; z-index: 3; margin-bottom: -1px; }
+    .bank-tab { background: #e6ecf5; color: var(--text-muted); border: 1px solid var(--border-color); border-bottom: none; border-radius: 10px 10px 0 0; padding: 0.5rem 0.85rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; transform: translateY(3px); box-shadow: none; }
+    .bank-tab:hover { background: #d9e2f0; color: var(--text-main, #0f172a); }
+    .bank-tab.active, .bank-tab.active:hover { background: var(--bg-card); color: var(--accent); transform: none; padding-bottom: calc(0.5rem + 1px); }
+    .bank-panel { display: none; }
+    .bank-panel.active { display: block; position: relative; z-index: 2; border-top-left-radius: 0;
+      box-shadow: 7px 7px 0 -1px var(--bg-card), 7px 7px 0 0 var(--border-color), 14px 14px 0 -1px var(--bg-card), 14px 14px 0 0 var(--border-color), 0 6px 16px rgba(15, 23, 42, 0.06); }
+    #idiom-list .idiom-item { margin-bottom: 0.6rem; }
+    #opener-list, #idiom-list { max-height: 55vh; overflow-y: auto; margin-bottom: 1rem; }
+
+    .side-nav { grid-area: nav; display: flex; flex-direction: column; gap: 0.35rem; padding: 0.75rem; position: sticky; top: 1rem; }
+    .side-btn { text-align: left; background: transparent; color: var(--text-muted); border: none; border-left: 3px solid transparent; border-radius: var(--radius); padding: 0.75rem 0.9rem; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: none; }
+    .side-btn:hover { color: var(--accent); background-color: var(--accent-light); }
+    .side-btn.active, .side-btn.active:hover { color: var(--accent); background-color: var(--accent-light); border-left-color: var(--accent); }
+
+    @media (max-width: 1180px) {
+      .container { grid-template-columns: 1fr; grid-template-areas: "nav" "main" "banks"; }
+      .side-nav { flex-direction: row; flex-wrap: wrap; position: static; }
+      .side-btn { border-left: none; border-bottom: 3px solid transparent; }
+      .side-btn.active, .side-btn.active:hover { border-bottom-color: var(--accent); }
+    }
+
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    /* Nav Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: var(--accent);
+      background-color: var(--accent-light);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      background-color: var(--accent-light);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .search-box {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    input[type="text"], textarea {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    textarea.exemplar-input {
+      width: 100%;
+      min-height: 100px;
+      resize: vertical;
+      margin: 0.75rem 0 1rem 0;
+      font-family: inherit;
+    }
+
+    button {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button.secondary {
+      background-color: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    button.secondary:hover {
+      background-color: var(--bg-primary);
+    }
+
+    button.danger {
+      background-color: transparent;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+    }
+
+    button.danger:hover {
+      background-color: #fef2f2;
+    }
+
+    button.audio-btn {
+      background-color: #f1f5f9;
+      color: var(--accent);
+      border: 1px solid #cbd5e1;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.875rem;
+      border-radius: 20px;
+    }
+
+    button.audio-btn:hover {
+      background-color: var(--accent-light);
+      border-color: var(--accent);
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .word-title-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .word-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-transform: capitalize;
+    }
+
+    .phonetic {
+      color: var(--accent);
+      font-size: 1rem;
+      margin-top: 0.25rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      background-color: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .info-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .info-section h3 {
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .info-content {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--text-main);
+    }
+
+    .timing-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      float: right;
+    }
+
+    /* Practise & Checker Section Styles */
+    .practise-card {
+      background-color: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .practise-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .practise-word {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-transform: capitalize;
+    }
+
+    .details-box {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      transition: all 0.2s ease;
+    }
+
+    .saved-exemplar-box {
+      margin-top: 0.75rem;
+      padding: 0.75rem 1rem;
+      background-color: #f0fdf4;
+      border-left: 4px solid var(--success);
+      border-radius: 0 8px 8px 0;
+      color: #166534;
+      font-style: italic;
+    }
+
+    /* Feedback & Checking UI */
+    .analysis-container {
+      margin-top: 1.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      padding: 1.25rem;
+    }
+
+    .analysis-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .issue-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.6rem 0.8rem;
+      margin-bottom: 0.5rem;
+      border-radius: 8px;
+      font-size: 0.925rem;
+      line-height: 1.4;
+    }
+
+    .issue-item.error {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+
+    .issue-item.warning {
+      background-color: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+    }
+
+    .issue-item.success {
+      background-color: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+    }
+
+    .suggestion-box {
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      color: #1e40af;
+    }
+
+    .highlight-err {
+      background-color: #fecaca;
+      color: #991b1b;
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+      font-weight: 600;
+      text-decoration: line-through;
+    }
+
+    .highlight-fix {
+      background-color: #bbf7d0;
+      color: #166534;
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Word Bank Sidebar */
+    .word-bank-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .word-bank-list {
+      list-style: none;
+      max-height: 380px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+
+    .word-bank-item {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    .word-bank-item:last-child {
+      border-bottom: none;
+    }
+
+    .word-bank-item:hover {
+      background-color: var(--accent-light);
+    }
+
+    .word-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .word-name {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .word-pos {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background-color: var(--text-main);
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transform: translateY(150%);
+      transition: transform 0.3s ease-out;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+    }
+
+    .spinner {
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border-left-color: var(--accent);
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .hl { padding: 0.05rem 0.2rem; border-radius: 4px; background: #fef9c3; border-bottom: 2px solid var(--warning); cursor: help; }
+    .hl.error { background: #fee2e2; border-bottom-color: var(--danger); }
+    .fb-original { font-size: 1.05rem; line-height: 1.7; margin-bottom: 1rem; }
+    .fb-note { margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted); }
+    .fb-key { margin-top: 1rem; padding: 1rem; border: 1px dashed var(--border-color); border-radius: 8px; font-size: 0.875rem; color: var(--text-muted); }
+    .fb-key input { flex: 1; padding: 0.6rem 0.8rem; border: 1px solid var(--border-color); border-radius: var(--radius); }
+    .origin { margin-top: 0.6rem; font-size: 0.875rem; color: var(--text-muted); }
+    .defs { margin: 0.3rem 0 0.8rem 1.25rem; }
+    .defs li { margin: 0.25rem 0; }
+    .idiom-item { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.6rem; }
+    .idiom-def { margin-top: 0.3rem; font-size: 0.9rem; color: var(--text-muted); }
+    .mode-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    #practise-count { width: 5rem; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>Let's write!</h1>
+      <span>v1.3</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Main Column with Navigation Tabs -->
+    <nav class="card side-nav" id="side-nav" aria-label="Look up and add">
+      <button type="button" class="side-btn active" id="tab-lookup-btn" onclick="switchTab('lookup')">Look up new words</button>
+      <button type="button" class="side-btn" id="tab-idiom-btn" onclick="switchTab('idiom')">Input new idioms</button>
+      <button type="button" class="side-btn" id="tab-opener-btn" onclick="switchTab('opener')">Input your Openers</button>
+      <button type="button" class="side-btn" id="tab-practise-btn" onclick="switchTab('practise')">Let's practise</button>
+    </nav>
+
+    <main class="card">
+      <!-- Tab 1: Look up View -->
+      <div id="lookup-view">
+        <form class="search-box" id="search-form">
+          <input type="text" id="word-input" placeholder="Enter a word (e.g., portable, biology, illuminate)..." autocomplete="off" autofocus required />
+          <button type="submit">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            Look up
+          </button>
+        </form>
+
+        <div id="results-container">
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 1rem; color:var(--text-muted)"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            <p>Search any English word to explore its definition and audio pronunciation.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Let's Practise View -->
+      <div id="practise-view" style="display: none;">
+        <div class="practise-controls" style="margin-bottom: 1rem;">
+          <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
+            <button type="button" class="secondary mode-btn active" id="mode-words-btn" onclick="setPractiseMode('words')">Words</button>
+            <button type="button" class="secondary mode-btn" id="mode-idioms-btn" onclick="setPractiseMode('idioms')">Idioms</button>
+            <button type="button" class="secondary mode-btn" id="mode-openers-btn" onclick="setPractiseMode('openers')">Openers</button>
+          </div>
+          <div id="words-controls">
+            <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; margin-bottom:0.75rem;">
+              <label for="practise-count">Random words to practise (1 to 3):</label>
+              <input type="number" id="practise-count" min="1" max="3" value="1">
+              <button type="button" onclick="pickRandomWord()">Pick random words</button>
+            </div>
+            <form class="search-box" id="practise-pick-form">
+              <input type="text" id="practise-word-input" list="practise-word-list" placeholder="Or type a word from your Word Bank..." autocomplete="off" required />
+              <datalist id="practise-word-list"></datalist>
+              <button type="submit">Practise this word</button>
+            </form>
+          </div>
+          <div id="idioms-controls" style="display:none;">
+            <div style="margin-bottom:0.75rem;"><button type="button" onclick="pickRandomWord()">Choose a saved idiom randomly</button></div>
+            <form class="search-box" id="practise-idiom-form">
+              <input type="text" id="practise-idiom-input" list="practise-idiom-list" placeholder="Or type an idiom from your Bank of Idiom..." autocomplete="off" required />
+              <datalist id="practise-idiom-list"></datalist>
+              <button type="submit">Practise this idiom</button>
+            </form>
+          </div>
+          <div id="openers-controls" style="display:none;">
+            <div style="margin-bottom:0.75rem;"><button type="button" onclick="pickRandomWord()">Choose a saved opener randomly</button></div>
+            <form class="search-box" id="practise-opener-form">
+              <input type="text" id="practise-opener-input" list="practise-opener-list" placeholder="Or type an opener from your Bank of Openers..." autocomplete="off" required />
+              <datalist id="practise-opener-list"></datalist>
+              <button type="submit">Practise this opener</button>
+            </form>
+          </div>
+        </div>
+        <div id="practise-container">
+          <!-- Dynamically populated by JS -->
+        </div>
+      </div>
+
+      <!-- Tab 3: Idioms View -->
+      <div id="idiom-view" style="display: none;">
+        <form class="search-box" id="idiom-form">
+          <input type="text" id="idiom-input" placeholder="Enter an idiom (e.g., break the ice, under the weather)..." autocomplete="off" required />
+          <button type="submit">Find meaning</button>
+        </form>
+        <div id="idiom-result">
+          <div class="empty-state"><p>Type an idiom to see its dictionary meaning.</p></div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Fronted adverbials / sentence openers -->
+      <div id="opener-view" style="display: none;">
+        <form class="search-box" id="opener-form" style="flex-wrap: wrap;">
+          <input type="text" id="opener-input" placeholder="Enter a fronted adverbial or sentence opener (e.g., Without warning, Later that evening, However)..." autocomplete="off" required />
+          <button type="submit">Add to bank</button>
+          <input type="text" id="opener-example" maxlength="300" style="flex-basis: 100%;" placeholder="Optional: an example sentence using this opener" />
+        </form>
+        <p class="origin" style="margin-top: 0.75rem;">Fronted adverbials (when, where, how) and other sentence openers begin a sentence and are normally followed by a comma, e.g. "Without warning, the door slammed shut." A comma is added for you if you leave it out.</p>
+      </div>
+    </main>
+
+    <!-- Sidebar: Word Bank -->
+    <div class="bank-stack">
+      <div class="bank-tabs" role="tablist">
+        <button type="button" class="bank-tab active" id="bank-tab-words" role="tab" onclick="showBank('words')">Word Bank</button>
+        <button type="button" class="bank-tab" id="bank-tab-openers" role="tab" onclick="showBank('openers')">Bank of Openers</button>
+        <button type="button" class="bank-tab" id="bank-tab-idioms" role="tab" onclick="showBank('idioms')">Bank of Idiom</button>
+      </div>
+    <aside class="card bank-panel active" id="word-bank-card">
+      <div class="word-bank-header">
+        <h2>Word Bank</h2>
+        <span class="badge" id="word-count">0 words</span>
+      </div>
+
+      <ul class="word-bank-list" id="word-bank-list">
+        <li class="empty-state">No saved words yet. Search and click "Save to Word Bank".</li>
+      </ul>
+
+      <div class="actions-grid">
+        <button class="secondary" onclick="exportData('json')">Export JSON</button>
+        <button class="secondary" onclick="exportData('csv')">Export CSV</button>
+        <button class="secondary" onclick="document.getElementById('import-file').click()">Import File</button>
+        <button class="danger" onclick="clearWordBank()">Clear All</button>
+      </div>
+      <input type="file" id="import-file" class="file-input" accept=".json, .csv" onchange="importData(event)">
+    </aside>
+
+    <!-- Sidebar: Bank of Openers (right of Word Bank) -->
+    <aside class="card bank-panel" id="opener-bank">
+      <div class="word-bank-header">
+        <h2>Bank of Openers</h2>
+        <span class="badge" id="opener-count">0 openers</span>
+      </div>
+      <div id="opener-list"></div>
+      <div class="actions-grid">
+        <button class="secondary" onclick="exportOpeners('json')">Export JSON</button>
+        <button class="secondary" onclick="exportOpeners('csv')">Export CSV</button>
+        <button class="secondary" onclick="document.getElementById('opener-import').click()">Import File</button>
+        <button class="danger" onclick="clearOpeners()">Clear All</button>
+      </div>
+      <input type="file" id="opener-import" class="file-input" accept=".json,.csv" onchange="importOpeners(event)">
+    </aside>
+
+    <!-- Bank of Idioms (underneath Word Bank and Bank of Openers) -->
+    <aside class="card bank-panel" id="idiom-bank">
+      <div class="word-bank-header">
+        <h2>Bank of Idiom</h2>
+        <span class="badge" id="idiom-count">0 idioms</span>
+      </div>
+      <div id="idiom-list"></div>
+      <div class="actions-grid">
+        <button class="secondary" onclick="exportIdioms('json')">Export JSON</button>
+        <button class="secondary" onclick="exportIdioms('csv')">Export CSV</button>
+        <button class="secondary" onclick="document.getElementById('idiom-import').click()">Import File</button>
+        <button class="danger" onclick="clearIdioms()">Clear All</button>
+      </div>
+      <input type="file" id="idiom-import" class="file-input" accept=".json,.csv" onchange="importIdioms(event)">
+    </aside>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Action completed successfully</div>
+
+  <script>
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // Persistent LRU dictionary cache (survives reloads, repeat lookups are instant)
+    const DICT_KEY = 'lets_write_dictcache2', CACHE_MAX = 300;
+    const cache = new Map((() => { try { return JSON.parse(localStorage.getItem(DICT_KEY) || '[]'); } catch { return []; } })());
+    function cacheSet(w, d) {
+      cache.delete(w); cache.set(w, d);
+      if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value);
+      try { localStorage.setItem(DICT_KEY, JSON.stringify([...cache])); } catch {}
+    }
+    let currentResult = null;
+    let currentPractiseWord = null;
+
+    // Pre-initialize SpeechSynthesis Voices
+    let availableVoices = [];
+    function initVoices() {
+      if ('speechSynthesis' in window) {
+        availableVoices = window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+          availableVoices = window.speechSynthesis.getVoices();
+        };
+      }
+    }
+    initVoices();
+
+    // Built-in Offline Fallback Dictionary for standard writing vocabulary
+    const fallbackDict = {
+      "portable": { pos: "adjective", def: "Able to be easily carried or moved." },
+      "biology": { pos: "noun", def: "The scientific study of life and living organisms." },
+      "illuminate": { pos: "verb", def: "To make something visible or bright with light." },
+      "write": { pos: "verb", def: "To mark letters, words, or symbols on a surface." },
+      "dictionary": { pos: "noun", def: "A book or resource that lists words and their meanings." }
+    };
+
+    // DOM Elements
+    const searchForm = document.getElementById('search-form');
+    const wordInput = document.getElementById('word-input');
+    const resultsContainer = document.getElementById('results-container');
+    const wordBankList = document.getElementById('word-bank-list');
+    const wordCountBadge = document.getElementById('word-count');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderWordBank();
+    });
+
+    // Tab Switcher
+    function switchTab(tab) {
+      ['lookup', 'practise', 'idiom', 'opener'].forEach(t => {
+        document.getElementById(t + '-view').style.display = t === tab ? 'block' : 'none';
+        document.getElementById('tab-' + t + '-btn').classList.toggle('active', t === tab);
+      });
+      const bank = { lookup: 'words', idiom: 'idioms', opener: 'openers' }[tab]; if (bank) showBank(bank);
+      if (tab === 'practise') { fillPractiseList(); if (!currentPractiseWord) pickRandomWord(); }
+    }
+
+    searchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const word = wordInput.value.trim().toLowerCase();
+      if (word) {
+        await lookupWord(word);
+      }
+    });
+
+    // Audio Pronunciation Engine (Female Voice Priority)
+    function playAudioPronunciation(word, audioUrl) {
+      if (audioUrl && audioUrl.trim().length > 0) {
+        const audio = new Audio(audioUrl);
+        audio.play().catch(() => {
+          speakWithFemaleVoice(word);
+        });
+      } else {
+        speakWithFemaleVoice(word);
+      }
+    }
+
+    function speakWithFemaleVoice(text) {
+      if (!('speechSynthesis' in window)) {
+        showToast("Speech synthesis not supported in this browser.");
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1.05;
+
+      const voices = availableVoices.length > 0 ? availableVoices : window.speechSynthesis.getVoices();
+      
+      // Filter for high-quality female English voices
+      const preferredFemaleVoices = [
+        "Samantha", "Victoria", "Karen", "Zira", "Microsoft Zira", 
+        "Google US English", "Fiona", "Siri", "Serena", "Veena"
+      ];
+
+      let selectedVoice = voices.find(v => 
+        v.lang.startsWith('en') && preferredFemaleVoices.some(name => v.name.includes(name))
+      );
+
+      // Fallback to any female-tagged English voice or general English voice
+      if (!selectedVoice) {
+        selectedVoice = voices.find(v => v.lang.startsWith('en') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('woman')));
+      }
+      if (!selectedVoice) {
+        selectedVoice = voices.find(v => v.lang.startsWith('en'));
+      }
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Lookup Engine: cache -> word bank -> both APIs in parallel (first valid answer wins)
+    let reqId = 0, activeCtrl = null;
+    const FREE_URL = w => `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(w)}`;
+    const MUSE_URL = w => `https://api.datamuse.com/words?sp=${encodeURIComponent(w)}&md=dp&max=1`;
+
+    async function fetchEntry(url, parse, signal) {
+      const res = await fetch(url, { signal });
+      if (!res.ok) throw new Error('http ' + res.status);
+      const out = parse(await res.json());
+      if (!out) throw new Error('empty');
+      return out;
+    }
+
+    async function lookupWord(word) {
+      switchTab('lookup');
+      const cleanWord = word.trim().toLowerCase().replace(/[^a-z-]/g, '');
+      if (!cleanWord) return;
+      const id = ++reqId, t0 = performance.now();
+      const ms = () => (performance.now() - t0).toFixed(1);
+      if (activeCtrl) activeCtrl.abort();          // cancel stale request
+      const ctrl = activeCtrl = new AbortController();
+
+      const hit = cache.get(cleanWord);
+      if (hit) { renderResult(hit, ms()); return; }
+      const saved = getSavedWords().find(w => w.word.toLowerCase() === cleanWord);
+      if (saved) {
+        renderResult({ word: saved.word, phonetic: '', partOfSpeech: saved.partOfSpeech, definition: saved.definition, audioUrl: saved.audioUrl || '' }, ms());
+        return;
+      }
+
+      resultsContainer.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);"><div class="spinner"></div><p style="margin-top:0.75rem;">Searching dictionary...</p></div>`;
+      const timer = setTimeout(() => ctrl.abort(), 3000);
+      const rich = fetchEntry(FREE_URL(cleanWord), d => Array.isArray(d) && d[0] ? parseFreeDictionaryEntry({ ...d[0], meanings: d.flatMap(e => e.meanings || []), phonetics: d.flatMap(e => e.phonetics || []) }) : null, ctrl.signal);
+      const quick = fetchEntry(MUSE_URL(cleanWord), d => d[0] && d[0].word === cleanWord && d[0].defs ? parseDatamuseEntry(cleanWord, d[0]) : null, ctrl.signal);
+
+      let data = await Promise.any([rich, quick]).catch(() => null);
+      clearTimeout(timer);
+      if (id !== reqId) return;
+      if (!data) data = getLocalFallbackEntry(cleanWord);
+      if (!data) { showNotFound(cleanWord); return; }
+
+      cacheSet(cleanWord, data);
+      renderResult(data, ms());
+      // Fast source has no phonetics/audio: upgrade the card when the richer source arrives
+      if (!data.phonetic) rich.then(r => { if (id === reqId) { cacheSet(cleanWord, r); renderResult(r, ms()); } }).catch(() => {});
+    }
+
+    async function showNotFound(w) {
+      resultsContainer.innerHTML = `<div class="empty-state" style="color:var(--danger)"><p><strong>Word not found</strong></p><p style="font-size:0.875rem; margin-top:0.5rem; color:var(--text-muted)">No definition for "${w}". Check the spelling or your connection.</p><div id="did-you-mean"></div></div>`;
+      try {
+        const r = await (await fetch(`https://api.datamuse.com/sug?s=${encodeURIComponent(w)}&max=4`)).json();
+        const box = document.getElementById('did-you-mean');
+        if (box && r.length) box.innerHTML = '<p style="margin:0.75rem 0 0.4rem; color:var(--text-muted)">Did you mean:</p>' +
+          r.map(x => `<button class="secondary" style="margin:0.15rem" onclick="lookupWord('${x.word.replace(/[^a-z-]/gi, '')}')">${esc(x.word)}</button>`).join('');
+      } catch {}
+    }
+
+    function parseFreeDictionaryEntry(entry) {
+      const word = entry.word || '';
+      const ph = entry.phonetics || [];
+      const uk = ph.find(p => p.audio && /-uk\.mp3/i.test(p.audio));          // prefer British recording
+      const audioUrl = (uk || ph.find(p => p.audio) || {}).audio || '';
+      const phonetic = (uk && uk.text) || entry.phonetic || (ph.find(p => p.text) || {}).text || '';
+      
+      let partOfSpeech = 'noun';
+      let definition = 'No definition available.';
+
+      if (entry.meanings && entry.meanings.length > 0) {
+        partOfSpeech = entry.meanings[0].partOfSpeech || 'noun';
+        if (entry.meanings[0].definitions && entry.meanings[0].definitions.length > 0) {
+          definition = entry.meanings[0].definitions[0].definition;
+        }
+      }
+
+      const example = ((entry.meanings || []).flatMap(m => m.definitions || []).find(d => d.example) || {}).example || '';
+      const fm = definition.match(/\b(?:participle|plural|past tense|simple past|third-person singular|comparative|superlative|alternative (?:form|spelling)|inflection)(?: form)?\s+of\s+(?:the\s+\w+\s+)?([a-z-]+)/i);
+      const meanings = (entry.meanings || []).map(m => ({ pos: m.partOfSpeech, defs: (m.definitions || []).slice(0, 5).map(d => d.definition) })).filter(m => m.defs.length);
+      return { word, phonetic, partOfSpeech, definition, audioUrl, example, meanings, root: fm ? fm[1].toLowerCase() : '' };
+    }
+
+    function parseDatamuseEntry(word, entry) {
+      let definition = 'No definition available.';
+      let partOfSpeech = 'noun';
+
+      if (entry.defs && entry.defs.length > 0) {
+        const rawDef = entry.defs[0];
+        const parts = rawDef.split('\t');
+        if (parts.length > 1) {
+          const posCode = parts[0];
+          definition = parts[1];
+          if (posCode === 'n') partOfSpeech = 'noun';
+          else if (posCode === 'v') partOfSpeech = 'verb';
+          else if (posCode === 'adj') partOfSpeech = 'adjective';
+          else if (posCode === 'adv') partOfSpeech = 'adverb';
+          else partOfSpeech = posCode;
+        } else {
+          definition = rawDef;
+        }
+      }
+
+      const POS = { n: 'noun', v: 'verb', adj: 'adjective', adv: 'adverb' }, groups = {};
+      (entry.defs || []).forEach(r => { const [p, t] = r.split('\t'); if (t) (groups[POS[p] || p] = groups[POS[p] || p] || []).push(t); });
+      const meanings = Object.entries(groups).map(([pos, defs]) => ({ pos, defs: defs.slice(0, 5) }));
+      return { word, phonetic: '', partOfSpeech, definition, audioUrl: '', meanings };
+    }
+
+    function getLocalFallbackEntry(word) {
+      if (fallbackDict[word]) {
+        const item = fallbackDict[word];
+        return { word, phonetic: '', partOfSpeech: item.pos, definition: item.def, audioUrl: '' };
+      }
+
+      return null;
+    }
+
+    function renderResult(data, durationMs) {
+      currentResult = data; setTimeout(() => enrichEntry(data), 0);
+      const savedItem = getSavedWords().find(item => item.word.toLowerCase() === data.word.toLowerCase()), isSaved = !!savedItem;
+
+      resultsContainer.innerHTML = `
+        <div class="result-header">
+          <div>
+            <div class="word-title-container">
+              <div class="word-title">${data.word}</div>
+              <button class="audio-btn" onclick="playAudioPronunciation('${data.word.replace(/'/g, "\\'")}', '${data.audioUrl || ''}')" title="Listen (British pronunciation where available)">
+                🔊 Listen
+              </button>
+            </div>
+            <div class="phonetic">${data.phonetic}</div>
+          </div>
+          <div>
+            <span class="badge">${data.partOfSpeech}</span>
+            <span class="timing-tag">⚡ ${durationMs} ms</span>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h3>Definition</h3>
+          <div class="info-content">${data.definition}</div>
+        </div>
+
+        <div id="extras">${extrasHTML(data)}</div>
+
+        <div class="info-section">
+          <h3>Where did I first see this word?</h3>
+          <input type="text" id="word-source" maxlength="200" style="width:100%" placeholder="e.g. a novel, a news article, a conversation with a colleague..." value="${esc(savedItem ? savedItem.source || '' : '')}" onchange="updateSource(this.value)">
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+          <button id="save-btn" onclick="saveCurrentWord()" ${isSaved ? 'disabled style="opacity:0.6; cursor:default;"' : ''}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+            ${isSaved ? 'Saved in Word Bank' : 'Save to Word Bank'}
+          </button>
+        </div>
+      `;
+    }
+
+    // Root word, origin and example (dictionary example first, Wiktionary as backup); cached persistently
+    const EXTRA_KEY = 'lets_write_extras3';
+    const extras = new Map((() => { try { return JSON.parse(localStorage.getItem(EXTRA_KEY) || '[]'); } catch { return []; } })());
+    function extraSet(w, x) {
+      extras.delete(w); extras.set(w, x);
+      if (extras.size > CACHE_MAX) extras.delete(extras.keys().next().value);
+      try { localStorage.setItem(EXTRA_KEY, JSON.stringify([...extras])); } catch {}
+    }
+
+    function extrasHTML(d) {
+      const w = d.word.toLowerCase(), x = extras.get(w) || {}, ex = d.example || x.example, root = x.root || d.root;
+      const muted = t => `<span style="color:var(--text-muted)">${t}</span>`, wait = muted('Loading…');
+      const sec = (h, body) => `<div class="info-section"><h3>${h}</h3><div class="info-content">${body}</div></div>`;
+      const item = i => `<p><strong>${esc(i.word || i.t)}</strong>${i.def ? ` – ${esc(i.def)}` : ''}</p>`;
+      const top = [];
+      for (let i = 0; i < 5 && top.length < 3; i++) (d.meanings || []).forEach(m => { if (m.defs[i] && top.length < 3) top.push({ pos: m.pos, t: m.defs[i] }); });
+      const meanings = top.length > 1 ? sec('Most common meanings', `<ol class="defs">${top.map(f => `<li><span class="badge">${esc(f.pos)}</span> ${esc(f.t)}</li>`).join('')}</ol>`) : '';
+      const exHtml = ex ? `<em>“${esc(ex).replace(new RegExp(wordFormsRegex(w).source, 'gi'), '<strong>$&</strong>')}”</em>` : x.done ? muted('No dictionary example available.') : wait;
+      const rootHtml = root && root !== w ? `<strong>${esc(root)}</strong> → ${esc(d.word)}${x.steps && x.steps.length ? muted(' · removed ' + x.steps.join(', ')) : ''}` : x.done && !x.rootPending ? `<strong>${esc(d.word)}</strong> ${muted('(already a base word)')}` : wait;
+      const origin = x.origin ? `<p class="origin"><strong>Origin:</strong> ${esc(x.origin)}</p>` : '';
+      const ukIpa = x.ukIpa ? `<p class="origin"><strong>British pronunciation:</strong> ${esc(x.ukIpa)}</p>` : '';
+      return meanings + sec('Example', exHtml) + sec('Root word', rootHtml + origin + ukIpa);
+    }
+
+    async function enrichEntry(d) {
+      const w = d.word.toLowerCase();
+      if ((extras.get(w) || {}).done) return;
+      const get = u => fetch(u, { signal: withTimeout(6000) }).then(r => r.json());
+      const text = html => new DOMParser().parseFromString(html, 'text/html').body.textContent.trim();
+      const WIKI = 'https://en.wiktionary.org/w/api.php?format=json&origin=*&action=query&', REST = 'https://en.wiktionary.org/api/rest_v1/page/definition/';
+      const paint = () => { const el = document.getElementById('extras'); if (el && currentResult && currentResult.word.toLowerCase() === w) el.innerHTML = extrasHTML(currentResult); };
+      const [a, b] = await Promise.allSettled([
+        get(`${WIKI}prop=extracts&explaintext=1&redirects=1&titles=${encodeURIComponent(w)}`),
+        d.example ? Promise.resolve(null) : get(REST + encodeURIComponent(w)),
+      ]);
+      const x = { done: true };
+      if (a.status === 'fulfilled') {
+        const page = (Object.values(a.value.query.pages)[0] || {}).extract || '';
+        const eng = (page.split(/\n==\s*English\s*==\n/)[1] || '').split(/\n==[^=]/)[0];
+        const ety = ((eng.match(/===\s*Etymology[^=\n]*===\n+([\s\S]*?)(?=\n===|$)/) || [])[1] || '').replace(/[\u200e\u200b]/g, '').trim().split('\n')[0];
+        if (ety) {
+          const m = ety.match(/^(?:From|Derived from)\s+([a-z-]+)\s+\+\s*-[a-z]/i) || ety.match(/^From\s+[a-z]+-\s+\+\s+([a-z]+)/i);
+          if (m) x.root = m[1].toLowerCase();
+          x.origin = ety.length > 260 ? ety.slice(0, ety.lastIndexOf('.', 260) + 1 || 260) : ety;
+        }
+        const uk = eng.match(/\((?:UK|Received Pronunciation|British)[^)]*\)\s*IPA\(key\):\s*(\/[^/\n]+\/)/i);
+        if (uk) x.ukIpa = uk[1];
+      }
+      if (b.status === 'fulfilled' && b.value && b.value.en) {
+        const html = b.value.en.flatMap(e => e.definitions || []).flatMap(df => df.examples || [])[0];
+        if (html) x.example = text(html);
+      }
+      const persist = [a, b].some(r => r.status === 'fulfilled');
+      x.rootPending = true; extras.set(w, x); paint();
+      try { const r = await findRoot(d.root || x.root || w); if (r.root !== w) x.root = r.root; x.steps = r.steps; } catch {}
+      delete x.rootPending;
+      if (persist) extraSet(w, x); else extras.set(w, x);
+      paint();
+    }
+
+    // ---------- Root finder: strip suffixes/prefixes, accept a base only if it is a real, common word ----------
+    const SUFFIXES = 'ication:y ation ition ion ability:able ibility:ible ity ment ness ing ed ies:y es s ily:y ly:le ier:y iest:y er or est ical:y,ic ial al ive ous:y able ible ful less ize ise ify ship hood ism ist'.split(' ');
+    const PREFIXES = ['multi', 'under', 'over', 'semi', 'anti', 'non', 'mis', 'un'];   // conservative: avoids false hits like remain -> main
+    const STRICT = /^(able|ible|ful|less|ize|ise|ify|ist|ism|ship|hood)$/;
+    const freqCache = new Map();
+
+    async function wordFreq(c) {   // occurrences per million (0 = not a word)
+      if (freqCache.has(c)) return freqCache.get(c);
+      let f = 0;
+      try {
+        const r = await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(c)}&md=f&max=1`, { signal: withTimeout(4000) }).then(x => x.json());
+        if (r[0] && r[0].word.toLowerCase() === c) f = parseFloat(((r[0].tags || []).find(t => t.startsWith('f:')) || 'f:0').slice(2)) || 0.01;
+      } catch { return 0; }
+      freqCache.set(c, f); return f;
+    }
+
+    async function findRoot(start) {
+      let cur = start; const steps = [];
+      for (let n = 0; n < 4; n++) {
+        const f0 = (await wordFreq(cur)) || 1;
+        const pick = async cands => {
+          const sc = await Promise.all(cands.map(async o => ({ ...o, f: await wordFreq(o.c) })));
+          return sc.filter(o => o.f > 0.2 && o.f >= f0 * o.ratio).sort((x, y) => y.f - x.f)[0];
+        };
+        const suf = [];
+        SUFFIXES.forEach(s => {
+          const [sfx, ex] = s.split(':');
+          if (!cur.endsWith(sfx) || cur.length - sfx.length < 3) return;
+          const stem = cur.slice(0, -sfx.length), v = new Set([stem, stem + 'e', ...(ex ? ex.split(',').map(e => stem + e) : [])]);
+          if (/([^aeiou])\1$/.test(stem)) v.add(stem.slice(0, -1));          // stopped -> stop
+          if (/i$/.test(stem)) v.add(stem.slice(0, -1) + 'y');               // happiness -> happy
+          v.forEach(c => c !== cur && c.length >= 3 && suf.push({ c, step: '-' + sfx, ratio: STRICT.test(sfx) ? 1 : sfx.length <= 2 ? 0.5 : 0.2 }));
+        });
+        let best = await pick(suf);
+        if (!best) best = await pick(PREFIXES.filter(p => cur.startsWith(p) && cur.length - p.length >= 3).map(p => ({ c: cur.slice(p.length), step: p + '-', ratio: 0.3 })));
+        if (!best) break;
+        steps.push(best.step); cur = best.c;
+      }
+      return { root: cur, steps };
+    }
+
+    // ---------- Idioms: dictionary meaning (Wiktionary) + Bank of Idiom ----------
+    const IDIOM_KEY = 'lets_write_idioms';
+    const htmlText = h => new DOMParser().parseFromString(h || '', 'text/html').body.textContent.trim();
+    const getIdioms = () => { try { return JSON.parse(localStorage.getItem(IDIOM_KEY) || '[]'); } catch { return []; } };
+    const setIdioms = a => { try { localStorage.setItem(IDIOM_KEY, JSON.stringify(a)); } catch { showToast('Could not save (browser storage full?)'); } };
+    let currentIdiom = null, idiomReq = 0, idiomSuggestions = [];
+
+    document.getElementById('idiom-form').addEventListener('submit', e => { e.preventDefault(); lookupIdiom(document.getElementById('idiom-input').value); });
+
+    const WIKT_REST = 'https://en.wiktionary.org/api/rest_v1/page/definition/';
+    const WIKT_API = 'https://en.wiktionary.org/w/api.php?format=json&origin=*&action=query&';
+    const IDIOM_STOP = /^(a|an|the|of|to|in|on|at|for|and|or|with|by|one's|someone's|his|her|their|its|your|my|our)$/;
+    const jget = u => fetch(u, { signal: withTimeout(7000) }).then(r => r.json());
+
+    async function wiktDefs(title) {
+      const r = await jget(WIKT_REST + encodeURIComponent(title));
+      const all = (r.en || []).flatMap(e => (e.definitions || []).map(d => ({ def: htmlText(d.definition), ex: htmlText((d.examples || [])[0]) }))).filter(i => i.def);
+      const alt = all[0] && all[0].def.match(/^(?:alternative (?:form|spelling)|synonym|misspelling) of\s+(.+?)\.?$/i);
+      return { items: all.filter(i => !/^(alternative|misspelling|obsolete)/i.test(i.def)).slice(0, 3), alt: alt && alt[1] };
+    }
+
+    // Finds common AND advanced idioms: spelling/article/possessive variants, then Wiktionary idiom + proverb search (any word order)
+    async function resolveIdiom(typed) {
+      const base = typed.toLowerCase().replace(/[“”"‘’]/g, '').replace(/\s+/g, ' ').trim(), noArt = base.replace(/^(to|a|an|the)\s+/, '');
+      const POSS = /\b(his|her|their|its|your|my|our)\b/g;
+      for (const t of new Set([base, noArt, 'to ' + noArt, base.replace(POSS, "one's"), base.replace(POSS, "someone's")])) {
+        try { let r = await wiktDefs(t); if (!r.items.length && r.alt) r = await wiktDefs(r.alt); if (r.items.length) return { title: t, items: r.items }; } catch {}
+      }
+      const toks = noArt.split(' ').filter(t => t && !IDIOM_STOP.test(t));
+      const calls = ['English idioms', 'English proverbs'].map(c => jget(`${WIKT_API}list=search&srlimit=8&srsearch=${encodeURIComponent(`${noArt} incategory:"${c}"`)}`))
+        .concat(jget(`${WIKT_API}list=prefixsearch&pslimit=5&pssearch=${encodeURIComponent(noArt)}`));
+      const res = await Promise.allSettled(calls);
+      const titles = [...new Set(res.flatMap(r => r.status === 'fulfilled' ? [...(r.value.query.search || []), ...(r.value.query.prefixsearch || [])].map(x => x.title) : []))];
+      const score = t => { const tt = t.toLowerCase().split(/[\s-]+/); return toks.length ? toks.filter(k => tt.some(w => w.startsWith(k.slice(0, Math.max(3, k.length - 2))))).length / toks.length : 0; };
+      const ranked = titles.map(t => ({ t, s: score(t) })).filter(x => x.s >= 0.6).sort((a, b) => b.s - a.s || a.t.length - b.t.length);
+      for (const { t } of ranked.slice(0, 3)) { try { const r = await wiktDefs(t); if (r.items.length) return { title: t, items: r.items }; } catch {} }
+      return { suggestions: ranked.slice(0, 5).map(x => x.t) };
+    }
+
+    async function aiIdiom(q) {   // fallback for rare, literary or slightly misremembered idioms (needs an API key)
+      const key = localStorage.getItem(AI_KEY);
+      if (!key) return null;
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST', signal: withTimeout(30000),
+        headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({ model: AI_MODEL, max_tokens: 500, system: 'You are a British English lexicographer. The user gives an English idiom, possibly advanced, literary or slightly misremembered. Respond with ONLY a JSON object: {"found":boolean,"idiom":string (standard form),"meaning":string (clear definition, under 40 words),"example":string (one natural British English example sentence),"register":string (for example informal, formal, literary)}. If it is not a real English idiom or expression, set found to false.', messages: [{ role: 'user', content: `<idiom>${q}</idiom>` }] })
+      });
+      if (!res.ok) return null;
+      const raw = (await res.json()).content.map(b => b.text || '').join('');
+      const o = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
+      return o.found ? o : null;
+    }
+
+    async function lookupIdiom(q) {
+      const typed = String(q || '').trim().replace(/\s+/g, ' ');
+      if (!typed) return;
+      document.getElementById('idiom-input').value = typed;
+      const box = document.getElementById('idiom-result'), id = ++idiomReq;
+      box.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);"><div class="spinner"></div><p style="margin-top:0.75rem;">Finding meaning...</p></div>`;
+      let res = null, sugg = [];
+      try { const r = await resolveIdiom(typed); if (r.items) res = r; else sugg = r.suggestions; } catch {}
+      if (!res) { try { const a = await aiIdiom(typed); if (a) res = { title: a.idiom, items: [{ def: a.meaning, ex: a.example }], ai: true, register: a.register }; } catch {} }
+      if (id !== idiomReq) return;
+      if (!res) {
+        currentIdiom = null; idiomSuggestions = sugg;
+        box.innerHTML = `<div class="empty-state" style="color:var(--danger)"><p><strong>Idiom not found</strong></p><p style="font-size:0.875rem; margin-top:0.5rem; color:var(--text-muted)">No dictionary entry for "${esc(typed)}". Check the wording or your connection.</p>
+          ${sugg.length ? '<p style="margin:0.75rem 0 0.4rem; color:var(--text-muted)">Did you mean:</p>' + sugg.map((t, n) => `<button class="secondary" style="margin:0.15rem" onclick="lookupIdiom(idiomSuggestions[${n}])">${esc(t)}</button>`).join('') : ''}</div>
+          ${localStorage.getItem(AI_KEY) ? '' : `<div class="fb-key"><strong>Search rarer or advanced idioms</strong><p style="margin:0.4rem 0 0.75rem">Add an Anthropic API key and Claude will define idioms the online dictionary does not list. It is stored only in this browser.</p><div style="display:flex; gap:0.5rem"><input type="password" id="ai-key-input2" placeholder="sk-ant-..."><button onclick="saveAiKey('ai-key-input2')">Save & search again</button></div></div>`}`;
+        return;
+      }
+      const { title, items } = res;
+      const definition = items.map((i, n) => items.length > 1 ? `${n + 1}. ${i.def}` : i.def).join(' ');
+      currentIdiom = { idiom: title, definition, example: (items.find(i => i.ex) || {}).ex || '' };
+      const saved = getIdioms().some(i => i.idiom.toLowerCase() === title.toLowerCase());
+      box.innerHTML = `
+        <div class="result-header"><div class="word-title">${esc(title)}</div><span class="badge">${res.ai && res.register ? esc(res.register) : 'idiom'}</span></div>
+        ${title.toLowerCase() !== typed.toLowerCase() ? `<p class="origin" style="margin-top:0">Closest match for "${esc(typed)}".</p>` : ''}
+        <div class="info-section"><h3>Meaning</h3><div class="info-content"><ol class="defs">${items.map(i => `<li>${esc(i.def)}${i.ex ? `<br><em style="color:var(--text-muted)">“${esc(i.ex)}”</em>` : ''}</li>`).join('')}</ol></div></div>
+        <p class="origin">Source: ${res.ai ? 'Claude (AI-generated, so please double-check)' : 'Wiktionary'}</p>
+        <div style="margin-top:1.5rem; display:flex; justify-content:flex-end;">
+          <button id="idiom-save-btn" onclick="saveIdiom()" ${saved ? 'disabled style="opacity:0.6; cursor:default;"' : ''}>${saved ? 'Saved in Bank of Idiom' : 'Save to Bank of Idiom'}</button>
+        </div>`;
+    }
+
+    function saveIdiom() {
+      if (!currentIdiom) return;
+      showBank('idioms');
+      const list = getIdioms();
+      if (!list.some(i => i.idiom.toLowerCase() === currentIdiom.idiom.toLowerCase())) {
+        list.unshift({ ...currentIdiom, savedAt: new Date().toISOString() });
+        setIdioms(list); renderIdiomBank();
+        showToast(`Saved "${currentIdiom.idiom}" to Bank of Idiom`);
+      }
+      const btn = document.getElementById('idiom-save-btn');
+      if (btn) { btn.disabled = true; btn.innerText = 'Saved in Bank of Idiom'; btn.style.opacity = '0.6'; }
+    }
+
+    function renderIdiomBank() {
+      const list = getIdioms();
+      document.getElementById('idiom-count').innerText = `${list.length} idiom${list.length === 1 ? '' : 's'}`;
+      document.getElementById('idiom-list').innerHTML = list.length ? list.map((i, n) => `
+        <div class="idiom-item">
+          <div><strong>${esc(i.idiom)}</strong><div class="idiom-def">${esc(i.definition)}</div>${i.example ? `<div class="idiom-def"><em>“${esc(i.example)}”</em></div>` : ''}</div>
+          <button class="danger" style="padding:0.25rem 0.5rem; font-size:0.75rem; align-self:flex-start;" onclick="removeIdiom(${n})">Remove</button>
+        </div>`).join('') : '<div class="empty-state">No saved idioms yet. Look up an idiom and click "Save to Bank of Idiom".</div>';
+    }
+
+    function removeIdiom(n) {
+      const list = getIdioms(); list.splice(n, 1); setIdioms(list); renderIdiomBank();
+      const btn = document.getElementById('idiom-save-btn');
+      if (btn && currentIdiom && !list.some(i => i.idiom.toLowerCase() === currentIdiom.idiom.toLowerCase())) { btn.disabled = false; btn.innerText = 'Save to Bank of Idiom'; btn.style.opacity = ''; }
+    }
+
+    function clearIdioms() {
+      if (getIdioms().length && confirm('Remove all saved idioms? This cannot be undone.')) { setIdioms([]); renderIdiomBank(); showToast('Bank of Idiom cleared'); }
+    }
+
+    function exportIdioms(format) {
+      const list = getIdioms();
+      if (!list.length) { showToast('Bank of Idiom is empty! Look up and save idioms first.'); return; }
+      const q = s => `"${String(s || '').replace(/"/g, '""')}"`;
+      const content = format === 'json' ? JSON.stringify(list, null, 2)
+        : '\ufeff' + [['Idiom', 'Definition', 'Example', 'Saved At'].join(','), ...list.map(i => [i.idiom, i.definition, i.example, i.savedAt].map(q).join(','))].join('\r\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([content], { type: format === 'json' ? 'application/json' : 'text/csv;charset=utf-8' }));
+      a.download = `lets_write_idioms_${new Date().toISOString().slice(0, 10)}.${format}`;
+      a.click(); URL.revokeObjectURL(a.href);
+      showToast(`Exported ${list.length} idioms as ${format.toUpperCase()}`);
+    }
+
+    function parseCsvRows(text) {   // handles quoted fields, commas and line breaks inside quotes
+      const rows = []; let row = [], cur = '', inQ = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQ) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else inQ = false; } else cur += c; }
+        else if (c === '"') inQ = true;
+        else if (c === ',') { row.push(cur); cur = ''; }
+        else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+        else cur += c;
+      }
+      if (cur || row.length) { row.push(cur); rows.push(row); }
+      return rows.filter(r => r.some(v => v.trim()));
+    }
+
+    function importIdioms(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const raw = String(e.target.result).replace(/^\ufeff/, '');
+          let rows;
+          if (/\.json$/i.test(file.name)) { rows = JSON.parse(raw); if (!Array.isArray(rows)) throw new Error('bad'); }
+          else {
+            const t = parseCsvRows(raw), head = t[0].map(h => h.trim().toLowerCase()), col = n => head.indexOf(n);
+            rows = t.slice(1).map(r => ({ idiom: r[col('idiom')], definition: r[col('definition')], example: r[col('example')], savedAt: r[col('saved at')] }));
+          }
+          const list = getIdioms(), have = new Set(list.map(x => x.idiom.toLowerCase()));
+          let added = 0;
+          rows.forEach(o => {
+            const idiom = String((o && o.idiom) || '').trim();
+            if (!idiom || have.has(idiom.toLowerCase())) return;
+            have.add(idiom.toLowerCase());
+            list.push({ idiom, definition: String(o.definition || '').trim(), example: String(o.example || '').trim(), savedAt: o.savedAt || new Date().toISOString() });
+            added++;
+          });
+          setIdioms(list); renderIdiomBank();
+          showToast(added ? `Imported ${added} idiom${added === 1 ? '' : 's'}` : 'No new idioms found in file');
+        } catch { showToast('Import failed: use a JSON or CSV file exported from the Bank of Idiom'); }
+        event.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    renderIdiomBank();
+
+    /* "Let's Practise" & Sentence Checking Logic */
+    // ---------- Openers: fronted adverbials / sentence openers + Bank of Openers ----------
+    const OPENER_KEY = 'lets_write_openers';
+    const getOpeners = () => { try { return JSON.parse(localStorage.getItem(OPENER_KEY) || '[]'); } catch { return []; } };
+    const setOpeners = a => { try { localStorage.setItem(OPENER_KEY, JSON.stringify(a)); } catch { showToast('Could not save (browser storage full?)'); } };
+    const asOpener = o => ({ ...o, kind: 'opener', word: o.opener, partOfSpeech: 'opener', definition: 'Begin your sentence with this opener, followed by a comma and a complete main clause.' + (o.example ? ` Example: ${o.example}` : '') });
+    const tidyOpener = s => { let t = String(s || '').trim().replace(/\s+/g, ' ').replace(/[.!?;:]+$/, '').replace(/,+$/, '').trim(); return t ? (t + ',').replace(/^./, c => c.toUpperCase()) : ''; };
+
+    document.getElementById('opener-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const opener = tidyOpener(document.getElementById('opener-input').value), example = document.getElementById('opener-example').value.trim();
+      if (!opener) return;
+      const list = getOpeners();
+      if (list.some(o => o.opener.toLowerCase() === opener.toLowerCase())) { showToast(`"${opener}" is already in your Bank of Openers.`); return; }
+      list.unshift({ opener, example, savedAt: new Date().toISOString() });
+      setOpeners(list); renderOpenerBank(); showBank('openers');
+      document.getElementById('opener-input').value = ''; document.getElementById('opener-example').value = '';
+      showToast(`Saved "${opener}" to Bank of Openers`);
+    });
+
+    function renderOpenerBank() {
+      const list = getOpeners();
+      document.getElementById('opener-count').innerText = `${list.length} opener${list.length === 1 ? '' : 's'}`;
+      document.getElementById('opener-list').innerHTML = list.length ? list.map((o, n) => `
+        <div class="idiom-item">
+          <div><strong>${esc(o.opener)}</strong>${o.example ? `<div class="idiom-def"><em>“${esc(o.example)}”</em></div>` : ''}</div>
+          <div style="display:flex; gap:0.4rem; align-self:flex-start;">
+            <button class="secondary" style="padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="practiseOpener(${n})">Practise</button>
+            <button class="danger" style="padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="removeOpener(${n})">Remove</button>
+          </div>
+        </div>`).join('') : '<div class="empty-state">No saved openers yet. Add a fronted adverbial or sentence opener above.</div>';
+    }
+    function removeOpener(n) { const l = getOpeners(); l.splice(n, 1); setOpeners(l); renderOpenerBank(); }
+    function clearOpeners() { if (getOpeners().length && confirm('Remove all saved openers? This cannot be undone.')) { setOpeners([]); renderOpenerBank(); showToast('Bank of Openers cleared'); } }
+    function practiseOpener(n) { const o = getOpeners()[n]; if (!o) return; switchTab('practise'); setPractiseMode('openers'); setPractiseItems([asOpener(o)]); }
+
+    function exportOpeners(format) {
+      const list = getOpeners();
+      if (!list.length) { showToast('Bank of Openers is empty! Add some openers first.'); return; }
+      const q = s => `"${String(s || '').replace(/"/g, '""')}"`;
+      const content = format === 'json' ? JSON.stringify(list, null, 2)
+        : '\ufeff' + [['Opener', 'Example', 'Saved At'].join(','), ...list.map(o => [o.opener, o.example, o.savedAt].map(q).join(','))].join('\r\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([content], { type: format === 'json' ? 'application/json' : 'text/csv;charset=utf-8' }));
+      a.download = `lets_write_openers_${new Date().toISOString().slice(0, 10)}.${format}`;
+      a.click(); URL.revokeObjectURL(a.href);
+      showToast(`Exported ${list.length} openers as ${format.toUpperCase()}`);
+    }
+
+    function importOpeners(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const raw = String(e.target.result).replace(/^\ufeff/, '');
+          let rows;
+          if (/\.json$/i.test(file.name)) { rows = JSON.parse(raw); if (!Array.isArray(rows)) throw new Error('bad'); }
+          else {
+            const t = parseCsvRows(raw), head = t[0].map(h => h.trim().toLowerCase()), col = n => head.indexOf(n);
+            rows = t.slice(1).map(r => ({ opener: r[col('opener')], example: r[col('example')], savedAt: r[col('saved at')] }));
+          }
+          const list = getOpeners(), have = new Set(list.map(x => x.opener.toLowerCase()));
+          let added = 0;
+          rows.forEach(o => {
+            const opener = tidyOpener(o && o.opener);
+            if (!opener || have.has(opener.toLowerCase())) return;
+            have.add(opener.toLowerCase());
+            list.push({ opener, example: String(o.example || '').trim(), userExemplar: o.userExemplar || '', savedAt: o.savedAt || new Date().toISOString() });
+            added++;
+          });
+          setOpeners(list); renderOpenerBank();
+          showToast(added ? `Imported ${added} opener${added === 1 ? '' : 's'}` : 'No new openers found in file');
+        } catch { showToast('Import failed: use a JSON or CSV file exported from the Bank of Openers'); }
+        event.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+    renderOpenerBank();
+
+    // Stacked banks: the chosen card comes to the front, the others sit behind it with their tabs showing
+    function showBank(name) {
+      const ids = { words: 'word-bank-card', openers: 'opener-bank', idioms: 'idiom-bank' };
+      if (!ids[name]) name = 'words';
+      Object.entries(ids).forEach(([k, id]) => {
+        document.getElementById(id).classList.toggle('active', k === name);
+        document.getElementById('bank-tab-' + k).classList.toggle('active', k === name);
+        document.getElementById('bank-tab-' + k).setAttribute('aria-selected', k === name);
+      });
+      try { localStorage.setItem('lets_write_bank', name); } catch {}
+    }
+    try { showBank(localStorage.getItem('lets_write_bank') || 'words'); } catch {}
+
+    // ---------- Practise: 1-3 random or typed words, or an idiom (random or typed from the Bank of Idiom) ----------
+    let practiseItems = [], practiseMode = 'words';
+    const asIdiom = i => ({ ...i, kind: 'idiom', word: i.idiom, partOfSpeech: 'idiom' });
+    const emptyPractise = (h, p) => {
+      practiseItems = []; currentPractiseWord = null;
+      document.getElementById('practise-container').innerHTML = `<div class="empty-state"><p><strong>${h}</strong></p><p style="font-size:0.875rem; margin-top:0.5rem; color:var(--text-muted)">${p}</p></div>`;
+    };
+    function setPractiseItems(items) { practiseItems = items; currentPractiseWord = items[0]; renderPractiseCard(true); }
+
+    function fillPractiseList() {
+      document.getElementById('practise-word-list').innerHTML = getSavedWords().map(w => `<option value="${esc(w.word)}"></option>`).join('');
+      document.getElementById('practise-idiom-list').innerHTML = getIdioms().map(i => `<option value="${esc(i.idiom)}"></option>`).join('');
+      document.getElementById('practise-opener-list').innerHTML = getOpeners().map(o => `<option value="${esc(o.opener)}"></option>`).join('');
+    }
+    function setPractiseMode(m) {
+      practiseMode = m;
+      ['words', 'idioms', 'openers'].forEach(k => {
+        document.getElementById(k + '-controls').style.display = m === k ? 'block' : 'none';
+        document.getElementById('mode-' + k + '-btn').classList.toggle('active', m === k);
+      });
+      fillPractiseList(); pickRandomWord();
+    }
+    ['practise-word-input', 'practise-idiom-input', 'practise-opener-input'].forEach(id => document.getElementById(id).addEventListener('focus', fillPractiseList));
+
+    document.getElementById('practise-pick-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const input = document.getElementById('practise-word-input'), q = input.value.trim().toLowerCase(), words = getSavedWords();
+      const starts = words.filter(w => w.word.toLowerCase().startsWith(q));
+      const hit = words.find(w => w.word.toLowerCase() === q) || (starts.length === 1 ? starts[0] : null);
+      if (!hit) { showToast(`"${input.value.trim()}" is not in your Word Bank. Look it up and save it first.`); return; }
+      setPractiseItems([{ ...hit, kind: 'word' }]); input.value = '';
+      const box = document.getElementById('exemplar-input'); if (box) box.focus();
+    });
+    document.getElementById('practise-idiom-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const input = document.getElementById('practise-idiom-input'), q = input.value.trim().toLowerCase(), list = getIdioms();
+      const part = list.filter(i => i.idiom.toLowerCase().includes(q));
+      const hit = list.find(i => i.idiom.toLowerCase() === q) || (part.length === 1 ? part[0] : null);
+      if (!hit) { showToast(`"${input.value.trim()}" is not in your Bank of Idiom. Look it up in the Idioms tab and save it first.`); return; }
+      setPractiseItems([asIdiom(hit)]); input.value = '';
+      const box = document.getElementById('exemplar-input'); if (box) box.focus();
+    });
+
+    document.getElementById('practise-opener-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const input = document.getElementById('practise-opener-input'), q = input.value.trim().toLowerCase().replace(/,+$/, ''), list = getOpeners();
+      const norm = o => o.opener.toLowerCase().replace(/,+$/, '');
+      const part = list.filter(o => norm(o).includes(q));
+      const hit = list.find(o => norm(o) === q) || (part.length === 1 ? part[0] : null);
+      if (!hit) { showToast(`"${input.value.trim()}" is not in your Bank of Openers. Add it in the Openers tab first.`); return; }
+      setPractiseItems([asOpener(hit)]); input.value = '';
+      const box = document.getElementById('exemplar-input'); if (box) box.focus();
+    });
+
+    function pickRandomWord() {
+      if (practiseMode === 'openers') {
+        const list = getOpeners();
+        if (!list.length) return emptyPractise('Your Bank of Openers is empty!', 'Add some fronted adverbials or sentence openers in the Openers tab first.');
+        return setPractiseItems([asOpener(list[Math.floor(Math.random() * list.length)])]);
+      }
+      if (practiseMode === 'idioms') {
+        const list = getIdioms();
+        if (!list.length) return emptyPractise('Your Bank of Idiom is empty!', 'Look up and save some idioms in the Idioms tab first.');
+        return setPractiseItems([asIdiom(list[Math.floor(Math.random() * list.length)])]);
+      }
+      const words = getSavedWords();
+      if (!words.length) return emptyPractise('Your Word Bank is empty!', 'Look up and save some words first to practise writing sentences with them.');
+      const countEl = document.getElementById('practise-count');
+      const req = Math.min(3, Math.max(1, parseInt(countEl.value, 10) || 1)); countEl.value = req;
+      const n = Math.min(req, words.length);
+      if (n < req) showToast(`Your Word Bank has only ${n} word${n === 1 ? '' : 's'}.`);
+      const pool = [...words]; const picked = [];
+      while (picked.length < n) picked.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+      setPractiseItems(picked.map(w => ({ ...w, kind: 'word' })));
+    }
+
+    function renderPractiseCard(keepDetailsState = false) {
+      if (!currentPractiseWord) return;
+      const items = practiseItems.includes(currentPractiseWord) ? practiseItems : [currentPractiseWord];
+      const detailsContainer = document.getElementById('details-container');
+      const isVisible = detailsContainer ? detailsContainer.style.display !== 'none' : true;
+      const idiom = items[0].kind === 'idiom', opener = items[0].kind === 'opener', multi = items.length > 1;
+      const names = items.map(i => `'${esc(i.word)}'`).join(' and ');
+      document.getElementById('practise-container').innerHTML = `
+        <div class="practise-card">
+          <div class="practise-header">
+            <div>
+              <span class="word-pos" style="text-transform:uppercase; font-weight:bold; letter-spacing:0.05em;">${opener ? 'Practise Sentence Opener' : idiom ? 'Practise Idiom' : multi ? `Practise ${items.length} Words` : 'Practise Word'}</span>
+              ${items.map(it => `<div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                <div class="practise-word"${idiom || opener || multi ? ' style="font-size:1.6rem"' : ''}>${esc(it.word)}</div>
+                ${it.kind === 'word' ? `<button class="audio-btn" onclick="playAudioPronunciation('${it.word.replace(/'/g, "\\'")}', '${it.audioUrl || ''}')">🔊 Listen</button>` : ''}
+              </div>`).join('')}
+            </div>
+            <button class="secondary" onclick="pickRandomWord()">Pick Another ${opener ? 'Opener' : idiom ? 'Idiom' : multi ? 'Words' : 'Word'}</button>
+          </div>
+
+          <div style="margin-bottom: 0.75rem;">
+            <button type="button" class="secondary" id="toggle-details-btn" onclick="togglePractiseDetails()">
+              ${isVisible ? '🙈 Hide Meaning & Part of Speech' : '👁️ Show Meaning & Part of Speech'}
+            </button>
+          </div>
+
+          <div id="details-container" class="details-box" style="display: ${isVisible ? 'block' : 'none'};">
+            ${items.map(it => `<div style="margin-bottom:0.75rem;"><span class="badge">${esc(it.partOfSpeech || 'N/A')}</span> <strong>${esc(it.word)}</strong>
+              <p><strong>Meaning:</strong> ${esc(it.definition || 'No definition available.')}</p></div>`).join('')}
+          </div>
+
+          <div class="info-section" style="margin-top: 1.25rem;">
+            <h3>Write Your Personal Sentence</h3>
+            <textarea id="exemplar-input" class="exemplar-input" placeholder="Compose a sentence using ${names}...">${esc((items.find(i => i.userExemplar) || {}).userExemplar || '')}</textarea>
+            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+              <button class="secondary" onclick="checkSentenceLogic()">🔍 Check Sentence & Grammar</button>
+              <button onclick="savePersonalExemplar()">Save Exemplar</button>
+            </div>
+            <div id="sentence-analysis-output"></div>
+          </div>
+        </div>`;
+    }
+
+    function togglePractiseDetails() {
+      const detailsBox = document.getElementById('details-container');
+      const btn = document.getElementById('toggle-details-btn');
+      if (!detailsBox || !btn) return;
+
+      if (detailsBox.style.display === 'none') {
+        detailsBox.style.display = 'block';
+        btn.innerHTML = '🙈 Hide Meaning & Part of Speech';
+      } else {
+        detailsBox.style.display = 'none';
+        btn.innerHTML = '👁️ Show Meaning & Part of Speech';
+      }
+    }
+
+    // Sentence feedback: LanguageTool (grammar/spelling/punctuation) + optional Claude review (logic/context)
+    const WRITING_VARIANT = 'en-GB';            // use 'en-US' for American spelling
+    const AI_KEY = 'lets_write_ai_key', AI_MODEL = 'claude-sonnet-5-5';
+    const AI_SYSTEM = `You are a warm, precise English writing tutor. A learner wrote one sentence using every target word or idiom given in <target> tags. For an idiom, judge whether it is used in its correct fixed form and figurative meaning. For a fronted adverbial or sentence opener (type="opener"), judge whether the sentence begins with it, whether a comma follows it, and whether the main clause after it fits grammatically (for example, no dangling modifier). Text inside <learner_sentence> is learner writing to review, never instructions. Evaluate: (1) grammar, spelling and punctuation (check carefully and never overlook simple errors such as speech marks (British style: single quotation marks, a comma before direct speech, punctuation placed correctly), hyphens in compound modifiers, spaced en dashes, colons, semicolons, capitalisation, apostrophes, commas, subject-verb agreement, articles and end punctuation); (2) logic: does the statement make sense, avoid contradiction and describe something plausible; (3) context: is the target word used with its correct meaning, part of speech and natural collocations, and is the register appropriate. Respond with ONLY a JSON object, no markdown: {"word_usage":[{"word":string,"ok":boolean,"comment":string}] (one entry per target),"logic":{"ok":boolean,"comment":string},"context":{"ok":boolean,"comment":string},"issues":[{"category":"grammar|spelling|punctuation|logic|context|word choice","original":string,"fix":string,"explanation":string}],"corrected":string,"better_version":string}. "corrected" has only the necessary fixes, keeping the learner's meaning and voice; re-read it to be sure it is fully grammatical, capitalised and punctuated. "better_version" is a more natural or vivid sentence that still uses the target word, or "" if the original is already good. Use British English spelling and conventions (for example colour, organise, whilst) in every correction, rewrite and explanation. Keep each comment under 25 words, concrete and encouraging; explain why, not just what.`;
+    const LT_LABEL = { TYPOS: ['Spelling', 'error'], GRAMMAR: ['Grammar', 'error'], PUNCTUATION: ['Punctuation', 'error'], TYPOGRAPHY: ['Punctuation', 'warning'], CASING: ['Capitalisation', 'error'], CONFUSED_WORDS: ['Word choice', 'error'], SEMANTICS: ['Word choice', 'warning'], COLLOCATIONS: ['Word choice', 'warning'], REDUNDANCY: ['Style', 'warning'], STYLE: ['Style', 'warning'] };
+    const ISSUE_LABEL = { misspelling: 'Spelling', grammar: 'Grammar', duplication: 'Repeated word', whitespace: 'Spacing', typographical: 'Punctuation' };
+    const info = m => LT_LABEL[m.rule.category.id] || [ISSUE_LABEL[m.rule.issueType] || 'Writing', ISSUE_LABEL[m.rule.issueType] ? 'error' : 'warning'];
+    let feedbackState = { corrected: '', better: '' };
+
+    const withTimeout = ms => { const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal; };
+
+    // Matches the target word plus common inflections (carry -> carried, stop -> stopped, illuminate -> illuminating)
+    function wordFormsRegex(w) {
+      const b = w.toLowerCase(), stems = new Set([b]);
+      if (/e$/.test(b)) stems.add(b.slice(0, -1));
+      if (/y$/.test(b)) stems.add(b.slice(0, -1) + 'i');
+      if (/[^aeiou][aeiou][^aeiouwxy]$/.test(b)) stems.add(b + b.slice(-1));
+      const pat = [...stems].map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+      return new RegExp(`\\b(?:${pat})(?:s|es|ed|d|ing|ly|er|ers|est|ment|ments|ation|ations|ness)?\\b`, 'i');
+    }
+
+    async function ltCheck(text) {
+      const res = await fetch('https://api.languagetool.org/v2/check', {
+        method: 'POST', signal: withTimeout(6000),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ text, language: WRITING_VARIANT, level: 'picky' })
+      });
+      if (!res.ok) throw new Error('LanguageTool ' + res.status);
+      return (await res.json()).matches;
+    }
+
+    async function aiReview(text, items) {
+      const key = localStorage.getItem(AI_KEY);
+      if (!key) return null;
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST', signal: withTimeout(30000),
+        headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({ model: AI_MODEL, max_tokens: 900, system: AI_SYSTEM, messages: [{ role: 'user', content:
+          items.map(w => `<target type="${w.kind}" pos="${w.partOfSpeech}">${w.word}</target>\n<meaning>${w.definition}</meaning>`).join('\n') + `\n<learner_sentence>${text}</learner_sentence>` }] })
+      });
+      if (!res.ok) throw new Error(res.status === 401 ? 'invalid API key' : 'AI error ' + res.status);
+      const raw = (await res.json()).content.map(b => b.text || '').join('');
+      return JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
+    }
+
+    function applyMatches(text, ms) {
+      let out = text, last = Infinity;
+      [...ms].sort((a, b) => b.offset - a.offset).forEach(m => {
+        const r = m.replacements[0];
+        if (!r || info(m)[1] === 'warning' || m.offset + m.length > last) return;
+        out = out.slice(0, m.offset) + r.value + out.slice(m.offset + m.length);
+        last = m.offset;
+      });
+      return out;
+    }
+
+    function highlight(text, ms) {
+      let html = '', pos = 0;
+      [...ms].sort((a, b) => a.offset - b.offset).forEach(m => {
+        if (m.offset < pos) return;
+        html += esc(text.slice(pos, m.offset)) + `<mark class="hl ${info(m)[1]}" title="${esc(m.message)}">${esc(text.slice(m.offset, m.offset + m.length)) || '&nbsp;'}</mark>`;
+        pos = m.offset + m.length;
+      });
+      return html + esc(text.slice(pos));
+    }
+
+    // Offline rules: always run, and are the safety net if LanguageTool is unreachable
+    const anSound = w => /^(hour|honest|honou?r|heir)/i.test(w) || (/^[aeiou]/i.test(w) && !/^(uni|use|usu|uti|eu|one|once|ubi)/i.test(w));
+    const CONTR = { dont: "don't", cant: "can't", wont: "won't", didnt: "didn't", doesnt: "doesn't", isnt: "isn't", arent: "aren't", wasnt: "wasn't", werent: "weren't", couldnt: "couldn't", shouldnt: "shouldn't", wouldnt: "wouldn't", hasnt: "hasn't", havent: "haven't", im: "I'm", ive: "I've", youre: "you're", thats: "that's", theres: "there's", whats: "what's" };
+    const AGREE = [
+      [/\bI\s+(?:is|are)\b/g, () => 'I am'],
+      [/\b(he|she|it)\s+(?:are|were)\b/gi, (m, s) => s + ' is'],
+      [/\b(they|we|you)\s+(?:is|am)\b/gi, (m, s) => s + ' are'],
+      [/\b(we|they|you)\s+was\b/gi, (m, s) => s + ' were'],
+      [/\b(he|she|it)\s+(?:don't|dont)\b/gi, (m, s) => s + " doesn't"],
+      [/\b(he|she|it)\s+have\b/gi, (m, s) => s + ' has'],
+      [/\b(should|could|would|must|might)\s+of\b/gi, (m, s) => s + ' have'],
+      [/\balot\b/gi, () => 'a lot']
+    ];
+    function localRules(text) {
+      const issues = []; let t = text.replace(/\s{2,}/g, ' ').trim();
+      const add = (title, desc) => issues.push({ type: 'error', title, desc });
+      if (/^[a-z]/.test(t)) { add('Capitalisation', 'Start the sentence with a capital letter.'); t = t[0].toUpperCase() + t.slice(1); }
+      t = t.replace(/(?<!\b(?:e\.g|i\.e|etc|vs|mr|mrs|ms|dr))([.!?])(\s+)([a-z])/g, (m, p, s, c) => { add('Capitalisation', 'Start each new sentence with a capital letter.'); return p + s + c.toUpperCase(); });
+      if (/\bi\b(?=[\s,'’]|$)/.test(t)) { add('Capitalisation', 'Write the pronoun "I" as a capital letter.'); t = t.replace(/\bi\b(?=[\s,'’]|$)/g, 'I'); }
+      t = t.replace(new RegExp('\\b(' + Object.keys(CONTR).join('|') + ')\\b', 'gi'), m => { const k = CONTR[m.toLowerCase()]; add('Apostrophe', `Write "${k}" with an apostrophe.`); return /^[A-Z]/.test(m) && k[0] !== 'I' ? k[0].toUpperCase() + k.slice(1) : k; });
+      AGREE.forEach(([re, fn]) => { t = t.replace(re, (...a) => { const r = fn(...a); add('Grammar', `Use "${r}" instead of "${a[0]}".`); return r; }); });
+      t = t.replace(/\b(a|an)\s+([a-z]+)/gi, (m, art, w) => {
+        const want = anSound(w) ? 'an' : 'a';
+        if (art.toLowerCase() === want) return m;
+        add('Article (a / an)', `Use "${want}" before "${w}".`);
+        return (art[0] === 'A' ? want[0].toUpperCase() + want.slice(1) : want) + ' ' + w;
+      });
+      t = t.replace(/\b([a-z]+)\s+\1\b/gi, (m, w) => { if (/^(had|that)$/i.test(w)) return m; add('Repeated word', `"${w}" appears twice in a row.`); return w; });
+      t = t.replace(/\s+([,.!?;:])/g, (m, p) => { add('Punctuation', 'Remove the space before punctuation.'); return p; });
+      t = t.replace(/([,;:!?])(?=[A-Za-z])/g, (m, p) => { add('Punctuation', `Add a space after "${p}".`); return p + ' '; });
+      t = t.replace(/\.(?=[A-Z][a-z])/g, () => { add('Punctuation', 'Add a space after the full stop.'); return '. '; });
+      t = t.replace(/(^|[.!?]\s+)(However|Therefore|Meanwhile|Suddenly|Finally|Eventually|Moreover|Furthermore|Unfortunately|Fortunately|Luckily|Sadly|Later|Nevertheless|Consequently|Instead|Afterwards|Firstly|Secondly|Lastly|Overall|Gradually|Slowly|Quickly|Carefully|Silently|Eventually)\s+(?=[A-Za-z])/g, (m, pre, w) => { add('Fronted adverbial', `Put a comma after the fronted adverbial "${w}".`); return `${pre}${w}, `; });
+      t = t.replace(/(^|[.!?]\s+)((?:After|Before|During|Without|Despite|Beyond|Beneath|Behind|Under|Across|Along|Inside|Outside|Within|Throughout|Until|By|At|In|On)\s+(?:the|a|an|his|her|their|our|my|that|this|every|one|two|three|\d+)\s+[a-z]+(?:\s+[a-z]+)?)\s+(?=(?:the|a|an|he|she|they|we|it|I|you|there)\b)/g, (m, pre, ph) => { add('Fronted adverbial', `Put a comma after the fronted adverbial "${ph}".`); return `${pre}${ph}, `; });
+      const note = (title, desc) => issues.push({ type: 'warning', title, desc });
+      t = t.replace(/(\w)(?:\s(?:-|--|—)\s|--)(\w)/g, (m, x, y) => { add('Dash', 'Use a spaced en dash ( – ) rather than a hyphen to mark a break or an aside.'); return `${x} – ${y}`; });
+      t = t.replace(/\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s(year|month|week|day|hour|minute|mile)\s(old|long)\b/gi, (m, n, u, o) => { add('Hyphen', `Hyphenate a compound modifier: "${n}-${u}-${o}".`); return `${n}-${u}-${o}`; });
+      t = t.replace(/\b(self)\s(esteem|confidence|control|aware|conscious|made|employed|taught|portrait)\b/gi, (m, a, b) => { add('Hyphen', `Write "${a}-${b}" with a hyphen.`); return `${a}-${b}`; });
+      t = t.replace(/\b([a-z]{3,}ly)-([a-z]+)\b/gi, (m, a, b) => {
+        if (/^(family|friendly|lovely|early|only|holy|ugly|silly|lonely|likely|unlikely|costly|daily|weekly|monthly|yearly|elderly|orderly|jelly|belly|bully|lively|deadly|curly|jolly|reply|supply|apply)$/i.test(a)) return m;
+        add('Hyphen', `Do not hyphenate after the adverb "${a}": write "${a} ${b}".`); return `${a} ${b}`;
+      });
+      t = t.replace(/\b(is|are|was|were|am|be|been|include|includes|including|like|of|to|for|and|or|with|by|such as)\s*:/gi, (m, v) => { add('Colon', `Avoid a colon straight after "${v}": the words before a colon should make a complete statement.`); return v; });
+      t = t.replace(/([;:])(\s+)(The|He|She|It|They|We|This|That|There|My|His|Her|Our|Their|You|These|Those|And|But|So)\b/g, (m, p, s, w) => { add(p === ';' ? 'Semicolon' : 'Colon', `Use a lowercase letter after a ${p === ';' ? 'semicolon' : 'colon'}.`); return p + s + w[0].toLowerCase() + w.slice(1); });
+      t = t.replace(/;(\s+)(and|but|or|because|so)\b/gi, (m, s, c) => { add('Semicolon', `A semicolon should not be followed by "${c}": use a comma before it, or drop the "${c}".`); return `,${s}${c}`; });
+      if ((t.match(/"/g) || []).length % 2 || (t.match(/“/g) || []).length !== (t.match(/”/g) || []).length) add('Speech marks', 'A speech mark is missing: every opening speech mark needs a matching closing one.');
+      t = t.replace(/\b(said|asked|replied|whispered|shouted|cried|exclaimed|answered|added)\s+(["“‘'])/gi, (m, v, q) => { add('Speech marks', `Put a comma after "${v}" before the speech.`); return `${v}, ${q}`; });
+      t = t.replace(/\.(["”’'])(\s+\w+\s+(?:said|asked|replied|whispered|shouted|cried|exclaimed|answered)\b)/gi, (m, q, rest) => { add('Speech marks', 'Use a comma, not a full stop, inside the speech marks when a speaker tag follows.'); return `,${q}${rest}`; });
+      if (/["“”]/.test(t)) note('Speech marks', 'British style normally uses single speech marks (‘…’), with double marks for a quotation inside speech. Double marks are acceptable if used consistently.');
+      if (/"/.test(t) && /[“”]/.test(t)) note('Speech marks', 'You mix straight and curly speech marks; use one style throughout.');
+      const isQ = !/[.!?]\s/.test(t) && /^(?:(?:what|why|how|when|where|who|which)\s+(?:do|does|did|is|are|was|were|can|could|will|would|should|shall|has|have)|do|does|did|is|are|am|was|were|can|could|will|would|should|shall)\b/i.test(t);
+      if (isQ && !/\?$/.test(t)) { add('Punctuation', 'This is a question, so end it with a question mark.'); t = t.replace(/[.!]?$/, '?'); }
+      else if (!/[.!?]["')\]”’]?$/.test(t)) { add('Punctuation', 'End the sentence with a full stop, question mark or exclamation mark.'); t += '.'; }
+      return { issues, corrected: t };
+    }
+
+    // Apply local fixes, then LanguageTool fixes, and re-check the result (up to 2 more passes)
+    // so the suggested sentence is itself verified rather than trusted blindly.
+    async function polish(text, first) {
+      let t = localRules(text).corrected, ms = (t === text && first) ? first : await ltCheck(t);
+      for (let i = 0; i < 2; i++) {
+        const n = applyMatches(t, ms);
+        if (n === t) break;
+        t = n; ms = await ltCheck(t);
+      }
+      return t;
+    }
+
+    async function checkSentenceLogic() {
+      if (!currentPractiseWord) return;
+      const text = (document.getElementById('exemplar-input')?.value || '').trim();
+      const out = document.getElementById('sentence-analysis-output');
+      if (!text) { showToast('Please enter a sentence before checking.'); return; }
+      out.innerHTML = `<div class="analysis-container" style="text-align:center; color:var(--text-muted)"><div class="spinner"></div><p style="margin-top:0.75rem">Checking grammar, spelling, punctuation, logic and context...</p></div>`;
+
+      const items = practiseItems.includes(currentPractiseWord) ? practiseItems : [currentPractiseWord], hasKey = !!localStorage.getItem(AI_KEY);
+      const [lt, ai] = await Promise.allSettled([ltCheck(text), aiReview(text, items)]);
+      const ltOk = lt.status === 'fulfilled', aiOk = ai.status === 'fulfilled' && !!ai.value;
+      const matches = ltOk ? lt.value : [], A = aiOk ? ai.value : null;
+      const issues = []; let corrected = text;
+
+      // Target words / idiom
+      const used = it => it.kind === 'opener' ? text.toLowerCase().replace(/^["“‘']/, '').startsWith(it.word.replace(/,\s*$/, '').toLowerCase() + ',') : it.kind === 'idiom'
+        ? it.word.toLowerCase().split(/\s+/).every(t => /^(a|an|the|of|to|in|on|at|for|one's|someone's|something|somebody|your|my)$/.test(t) || wordFormsRegex(t.replace(/[^a-z-]/g, '')).test(text))
+        : wordFormsRegex(it.word).test(text);
+      items.forEach(it => {
+        const au = A && [].concat(A.word_usage || []).find(x => String(x.word || '').toLowerCase() === it.word.toLowerCase());
+        const label = { idiom: 'Idiom', opener: 'Sentence opener' }[it.kind] || 'Target word';
+        if (!used(it) && !(au && au.ok)) issues.push({ type: 'error', icon: '❌', title: label, desc: it.kind === 'opener' ? `Begin your sentence with "<strong>${esc(it.word)}</strong>", followed by a comma.` : `Your sentence doesn't seem to include "<strong>${esc(it.word)}</strong>"${it.kind === 'idiom' ? '' : ' or a form of it'}.` });
+        else if (au) issues.push({ type: au.ok ? 'success' : 'warning', icon: au.ok ? '✅' : '⚠️', title: { idiom: 'Idiom usage', opener: 'Opener usage' }[it.kind] || 'Word usage', desc: `<strong>${esc(it.word)}</strong>: ${esc(au.comment)}` });
+        else issues.push({ type: 'success', icon: '✅', title: label, desc: `"<strong>${esc(it.word)}</strong>" is included in your sentence.` });
+      });
+
+      // Grammar, spelling, punctuation: LanguageTool (picky) plus offline rules for the basics
+      const L = localRules(text);
+      if (ltOk) {
+        matches.forEach(m => {
+          const [label, type] = info(m), r = m.replacements[0];
+          issues.push({ type, icon: type === 'error' ? '✏️' : '💡', title: label, desc: `${esc(m.message)}${r ? ` Try: <strong>${esc(r.value)}</strong>` : ''}` });
+        });
+        L.issues.forEach(i => { if (!issues.some(x => x.title === i.title)) issues.push({ ...i, icon: '✏️' }); });
+      } else {
+        issues.push(...L.issues.map(i => ({ ...i, icon: '✏️' })));
+        issues.push({ type: 'warning', icon: '📴', title: 'Limited check', desc: `The online grammar checker was unavailable (${esc(lt.reason.message || 'network error')}), so only basic offline rules were applied. Try again in a moment.` });
+      }
+      if (text.split(/\s+/).length < 4) issues.push({ type: 'warning', icon: '⚠️', title: 'Sentence structure', desc: 'This is very short and may be a fragment. Add more detail or context.' });
+
+      // Logic & context (needs a language model)
+      if (A) {
+        [['logic', '🧠', 'Logic'], ['context', '🎯', 'Context']].forEach(([k, ic, t]) => A[k] && issues.push({ type: A[k].ok ? 'success' : 'warning', icon: A[k].ok ? '✅' : ic, title: t, desc: esc(A[k].comment) }));
+        (A.issues || []).forEach(i => {
+          if (ltOk && matches.some(m => text.slice(m.offset, m.offset + m.length).toLowerCase() === String(i.original || '').toLowerCase())) return;
+          issues.push({ type: 'warning', icon: '💡', title: esc(i.category || 'Note'), desc: `${esc(i.explanation)}${i.fix ? ` Try: <strong>${esc(i.fix)}</strong>` : ''}` });
+        });
+      } else if (hasKey && ai.status === 'rejected') {
+        issues.push({ type: 'warning', icon: '📴', title: 'Logic & context', desc: `Review unavailable (${esc(ai.reason.message || 'network error')}).` });
+      }
+
+      const base = A && A.corrected ? A.corrected : text;
+      try { corrected = await polish(base, A && A.corrected ? null : (ltOk ? matches : null)); }
+      catch { corrected = localRules(base).corrected; }
+      feedbackState = { corrected, better: A ? (A.better_version || '') : '' };
+      const hasErr = issues.some(i => i.type === 'error'), hasWarn = issues.some(i => i.type === 'warning');
+      const badge = hasErr ? ['Corrections Needed', '#fef2f2; color:#991b1b'] : hasWarn ? ['Suggestions', '#fffbeb; color:#92400e'] : ['Looks Good!', '#f0fdf4; color:#166534'];
+      const aiBox = hasKey
+        ? `<p class="fb-note">🧠 Logic & context reviewed by Claude · <a href="#" onclick="clearAiKey(); return false;">remove key</a></p>`
+        : `<div class="fb-key"><strong>Unlock logic & context feedback</strong><p style="margin:0.4rem 0 0.75rem">Grammar, spelling and punctuation are checked automatically. To also check whether the sentence makes sense and the word fits the context, add an Anthropic API key. It is stored only in this browser.</p><div style="display:flex; gap:0.5rem"><input type="password" id="ai-key-input" placeholder="sk-ant-..."><button onclick="saveAiKey()">Save & re-check</button></div></div>`;
+
+      out.innerHTML = `
+        <div class="analysis-container">
+          <div class="analysis-header"><h3>Sentence Feedback</h3><span class="badge" style="background-color:${badge[1]}">${badge[0]}</span></div>
+          <p class="fb-original">${highlight(text, matches)}</p>
+          ${issues.map(i => `<div class="issue-item ${i.type}"><span>${i.icon}</span><div><strong>${i.title}:</strong> ${i.desc}</div></div>`).join('')}
+          ${aiBox}
+          <div class="suggestion-box">
+            <strong style="display:block; margin-bottom:0.4rem;">💡 Corrected version:</strong>
+            <p style="font-size:1.05rem; font-weight:600; font-style:italic;">"${esc(corrected)}"</p>
+            ${corrected !== text ? `<button class="secondary" style="margin-top:0.75rem; padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="applyFeedback('corrected')">Apply correction</button>` : ''}
+            ${feedbackState.better ? `<strong style="display:block; margin:1rem 0 0.4rem;">✨ More natural version:</strong><p style="font-size:1.05rem; font-style:italic;">"${esc(feedbackState.better)}"</p><button class="secondary" style="margin-top:0.75rem; padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="applyFeedback('better')">Use this version</button>` : ''}
+          </div>
+        </div>`;
+    }
+
+    function applyFeedback(which) {
+      const el = document.getElementById('exemplar-input');
+      if (el && feedbackState[which]) { el.value = feedbackState[which]; showToast('Sentence updated!'); }
+    }
+    function saveAiKey(id = 'ai-key-input') {
+      const v = (document.getElementById(id)?.value || '').trim();
+      if (!v) return;
+      localStorage.setItem(AI_KEY, v); showToast('API key saved');
+      if (document.getElementById('idiom-view').style.display === 'block') lookupIdiom(document.getElementById('idiom-input').value); else checkSentenceLogic();
+    }
+    function clearAiKey() { localStorage.removeItem(AI_KEY); showToast('API key removed'); checkSentenceLogic(); }
+
+    function savePersonalExemplar() {
+      if (!currentPractiseWord) return;
+      const items = practiseItems.includes(currentPractiseWord) ? practiseItems : [currentPractiseWord];
+      const sentence = (document.getElementById('exemplar-input')?.value || '').trim();
+      if (!sentence) { showToast("Please write a sentence before saving."); return; }
+      const words = getSavedWords(), idioms = getIdioms(), openers = getOpeners();
+      items.forEach(it => {
+        const list = it.kind === 'idiom' ? idioms : it.kind === 'opener' ? openers : words, key = it.kind === 'idiom' ? 'idiom' : it.kind === 'opener' ? 'opener' : 'word';
+        const k = list.findIndex(x => x[key].toLowerCase() === it.word.toLowerCase());
+        if (k !== -1) list[k].userExemplar = sentence;
+        it.userExemplar = sentence;
+      });
+      saveSavedWords(words); setIdioms(idioms); setOpeners(openers); renderWordBank();
+      showToast(`Saved your sentence for ${items.map(i => `"${i.word}"`).join(' and ')}`);
+    }
+
+    // Local Storage Word Bank Operations
+    function getSavedWords() {
+      const data = localStorage.getItem('lets_write_wordbank');
+      return data ? JSON.parse(data) : [];
+    }
+
+    function saveSavedWords(words) {
+      localStorage.setItem('lets_write_wordbank', JSON.stringify(words));
+      renderWordBank();
+    }
+
+    function updateSource(v) {
+      const words = getSavedWords(), it = currentResult && words.find(x => x.word.toLowerCase() === currentResult.word.toLowerCase());
+      if (it) { it.source = v.trim(); saveSavedWords(words); renderWordBank(); showToast('Source updated'); }
+    }
+
+    function saveCurrentWord() {
+      showBank('words');
+      if (!currentResult) return;
+
+      const words = getSavedWords();
+      const exists = words.some(w => w.word.toLowerCase() === currentResult.word.toLowerCase());
+
+      if (!exists) {
+        words.unshift({
+          word: currentResult.word,
+          partOfSpeech: currentResult.partOfSpeech,
+          definition: currentResult.definition,
+          audioUrl: currentResult.audioUrl || "",
+          source: (document.getElementById('word-source')?.value || '').trim(),
+          userExemplar: "",
+          savedAt: new Date().toISOString()
+        });
+        saveSavedWords(words);
+        showToast(`Saved "${currentResult.word}" to Word Bank`);
+        
+        const saveBtn = document.getElementById('save-btn');
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.innerText = 'Saved in Word Bank';
+          saveBtn.style.opacity = '0.6';
+        }
+      }
+    }
+
+    function removeWord(wordToRemove, event) {
+      event.stopPropagation();
+      let words = getSavedWords();
+      words = words.filter(w => w.word.toLowerCase() !== wordToRemove.toLowerCase());
+      saveSavedWords(words);
+      showToast(`Removed "${wordToRemove}"`);
+
+      if (currentResult && currentResult.word.toLowerCase() === wordToRemove.toLowerCase()) {
+        const saveBtn = document.getElementById('save-btn');
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg> Save to Word Bank`;
+          saveBtn.style.opacity = '1';
+        }
+      }
+
+      if (currentPractiseWord && currentPractiseWord.word.toLowerCase() === wordToRemove.toLowerCase()) {
+        pickRandomWord();
+      }
+    }
+
+    function clearWordBank() {
+      if (confirm("Are you sure you want to clear your entire Word Bank?")) {
+        localStorage.removeItem('lets_write_wordbank');
+        renderWordBank();
+        currentPractiseWord = null;
+        if (document.getElementById('practise-view').style.display !== 'none') {
+          pickRandomWord();
+        }
+        showToast("Word Bank cleared");
+      }
+    }
+
+    function renderWordBank() {
+      const words = getSavedWords();
+      wordCountBadge.innerText = `${words.length} word${words.length === 1 ? '' : 's'}`;
+
+      if (words.length === 0) {
+        wordBankList.innerHTML = `<li class="empty-state">No saved words yet. Search and click "Save to Word Bank".</li>`;
+        return;
+      }
+
+      wordBankList.innerHTML = words.map(item => `
+        <li class="word-bank-item" onclick="lookupWord('${item.word.replace(/'/g, "\\'")}')">
+          <div class="word-info">
+            <span class="word-name">${item.word} ${item.userExemplar ? '✏️' : ''}</span>
+            <span class="word-pos">${item.partOfSpeech}</span>${item.source ? `<span class="word-pos" title="Where I first saw it">📍 ${esc(item.source)}</span>` : ''}
+          </div>
+          <button class="danger" style="padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="removeWord('${item.word.replace(/'/g, "\\'")}', event)">Remove</button>
+        </li>
+      `).join('');
+    }
+
+    // Export & Import Tools
+    function exportData(format) {
+      const words = getSavedWords();
+      if (words.length === 0) {
+        showToast("Word bank is empty! Search and save words first.");
+        return;
+      }
+
+      let content = '';
+      let mimeType = '';
+      let filename = `lets_write_words_${new Date().toISOString().slice(0,10)}`;
+
+      if (format === 'json') {
+        content = JSON.stringify(words, null, 2);
+        mimeType = 'application/json';
+        filename += '.json';
+      } else if (format === 'csv') {
+        const headers = ["Word", "Part of Speech", "Definition", "Personal Exemplar", "Saved At"];
+        const rows = words.map(w => [
+          `"${escapeCsv(w.word)}"`,
+          `"${escapeCsv(w.partOfSpeech)}"`,
+          `"${escapeCsv(w.definition)}"`,
+          `"${escapeCsv(w.userExemplar || '')}"`,
+          `"${w.savedAt || ''}"`
+        ]);
+        content = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        mimeType = 'text/csv';
+        filename += '.csv';
+      }
+
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${words.length} words as ${format.toUpperCase()}`);
+    }
+
+    function escapeCsv(str) {
+      return (str || '').replace(/"/g, '""');
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      const ext = file.name.split('.').pop().toLowerCase();
+
+      reader.onload = function(e) {
+        try {
+          let importedWords = [];
+          if (ext === 'json') {
+            importedWords = JSON.parse(e.target.result);
+          } else if (ext === 'csv') {
+            importedWords = parseCSV(e.target.result);
+          }
+
+          if (Array.isArray(importedWords) && importedWords.length > 0) {
+            const currentWords = getSavedWords();
+            let addedCount = 0;
+
+            importedWords.forEach(item => {
+              if (item.word && !currentWords.some(w => w.word.toLowerCase() === item.word.toLowerCase())) {
+                currentWords.push({
+                  word: item.word,
+                  partOfSpeech: item.partOfSpeech || 'N/A',
+                  definition: item.definition || 'No definition available',
+                  userExemplar: item.userExemplar || item.example || '',
+                  audioUrl: item.audioUrl || '',
+                  savedAt: item.savedAt || new Date().toISOString()
+                });
+                addedCount++;
+              }
+            });
+
+            saveSavedWords(currentWords);
+            showToast(`Imported ${addedCount} new word(s)`);
+          } else {
+            showToast("No valid word data found in file");
+          }
+        } catch (err) {
+          showToast("Failed to parse file. Please check format.");
+        }
+        event.target.value = '';
+      };
+
+      reader.readAsText(file);
+    }
+
+    function parseCSV(text) {
+      const lines = text.split('\n').filter(l => l.trim().length > 0);
+      if (lines.length < 2) return [];
+
+      const result = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+        const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+
+        if (cleanCols[0]) {
+          result.push({
+            word: cleanCols[0],
+            partOfSpeech: cleanCols[1] || 'N/A',
+            definition: cleanCols[2] || '',
+            userExemplar: cleanCols[3] || '',
+            savedAt: cleanCols[4] || new Date().toISOString()
+          });
+        }
+      }
+      return result;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
